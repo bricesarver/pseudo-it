@@ -1,6 +1,6 @@
 # pseudo-it
 An approach that iteratively generates pseudoreferences, incorporating sample-specific variation and reducing mapping biases. Coded for Python 3.5+, but ought to work under other versions.
-
+```
 usage: pseudo-it.py [-h] [--PE1 PE1] [--PE2 PE2] [--SE SE] [--proc PROC]
                     [--bed BED] [--haplotype HAPLO] [--nocall] [--iupac]
                     [--keep-haploid-reference] [--filter FIL] [--nct NCT]
@@ -68,3 +68,4 @@ optional arguments:
   --nt NT               number of data threads for the GATK's
                         UnifiedGenotyper. total CPU usage is nct*nt (default:
                         1)
+```
