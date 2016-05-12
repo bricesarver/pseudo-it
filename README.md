@@ -1,5 +1,10 @@
 # pseudo-it
-An approach that iteratively generates pseudoreferences, incorporating sample-specific variation and reducing mapping biases. Coded for Python 3.5+, but ought to work under other versions.
+An approach that iteratively generates pseudoreferences, incorporating sample-specific variation and reducing mapping biases. Coded for Python 3.5+, but ought to work under other versions. This script manages the (potentially large) number of files and handles arguments appropriately.
+
+This is being converted into a true (and easier to follow/extend) Python package and will eventually be replaced.
+
+Please report issues via 'Issues' above, or send me an email.
+
 ```
 usage: pseudo-it.py [-h] [--PE1 PE1] [--PE2 PE2] [--SE SE] [--proc PROC]
                     [--bed BED] [--haplotype HAPLO] [--nocall] [--iupac]
