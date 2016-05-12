@@ -76,4 +76,14 @@ optional arguments:
                         UnifiedGenotyper. total CPU usage is nct*nt (default:
                         1)
 ```
+# FAQs:
+***How many iterations should I perform?***
+This depends on the sequence divergence of your sample relative to your reference and the type of data you have. For exome data, I found that three iterations performs well for samples with ~7.5 million years of divergence. If you expect more or have quickly evolving loci (noncoding, etc.), you might need more.
+
+***No-call masking takes a long time! Can this be sped up?***
+I'm looking into this, but it will require a multiprocessing approach and possibly the use of more sophisticated data structures.
+
+***You don't account for indels? Why not?***
+Not if you want to keep the same coordinate system of your reference! Easy enough to do afterwards using standard variant-calling aproaches.
+
 [1]:http://biopython.org/wiki/Biopython
