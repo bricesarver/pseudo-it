@@ -3,6 +3,8 @@ An approach that iteratively generates pseudoreferences, incorporating sample-sp
 
 This is being converted into a true (and easier to follow/extend) Python package and will eventually be replaced.
 
+Requires [Biopython][1].
+
 Please report issues via 'Issues' above, or send me an email.
 
 ```
@@ -74,3 +76,4 @@ optional arguments:
                         UnifiedGenotyper. total CPU usage is nct*nt (default:
                         1)
 ```
+[1]:http://biopython.org/wiki/Biopython
