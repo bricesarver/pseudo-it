@@ -52,7 +52,7 @@ optional arguments:
                         False)
   --keep-haploid-reference
                         if using '--iupac', this argument also keeps a haploid
-                        reference this reference is not masked (default:
+                        reference. this reference is not masked (default:
                         False)
   --filter FIL, -f FIL  overwrite the default filter used to select variants.
                         you MUST specify --filterName and might want to
