@@ -93,7 +93,7 @@ I'm looking into this, but it will require a multiprocessing approach and possib
 
 **You don't account for indels? Why not?**
 
-Not if you want to keep the same coordinate system of your reference! Easy enough to do afterwards using standard variant-calling aproaches.
+They shouldn't be included you want to keep the same coordinate system as your reference! Easy enough to do afterwards using standard variant-calling aproaches.
 
 **I can't remember if I allowed multiallelic calls in my final reference!**
 
