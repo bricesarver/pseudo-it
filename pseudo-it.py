@@ -272,7 +272,7 @@ def other_iterations(iterations, prefix, proc, totalIterations, bed, haplo, ncal
                         subprocess.check_call("bedtools maskfasta -fi {}.gatk.iteration{}.consensus.FINAL.fa -fo {}.masked.fa -bed {}".format(prefix, iterations, prefix, match), shell=True)
                         maskiteration = 1
                     else:
-                        subprocess.check_call("bedtools maskfasta -fi {}.masked.fa -fo tmp.fa -bed {}".format(prefix, prefix, match), shell=True)
+                        subprocess.check_call("bedtools maskfasta -fi {}.masked.fa -fo tmp.fa -bed {}".format(prefix, match), shell=True)
                         os.rename("tmp.fa", "{}.masked.fa".format(prefix))
         elif iupac:
             subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T FastaAlternateReferenceMaker -R {} -o {}.gatk.iteration{}.consensus.FINAL.fa -V {}.iteration{}.filtered.vcf -IUPAC {}'.format(reference, prefix, iterations, prefix, iterations, prefix), shell=True)
