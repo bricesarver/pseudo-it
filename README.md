@@ -3,7 +3,16 @@ An approach that iteratively generates pseudoreferences, incorporating sample-sp
 
 This is being converted into a true (and easier to follow/extend) Python package and will eventually be replaced.
 
-Requires [Biopython][1].
+Requires: 
+
+1. [Biopython][1]
+2. [Samtools][2]
+3. [The Genome Analysis Toolkit][3]
+4. [Picard][4]
+5. [BWA][5]
+6. [bedtools][6]
+
+The GATK and Picard jarfiles are expected to be in /usr/local/bin; the rest of the executables are expected to be in your $PATH. The system calls might require some modification depending on how your system is configured. I will be incorporating the ability to easily override default paths (if your administrator has things set up differently, for example) in a later version.
 
 Please report issues via 'Issues' above, or send me an email.
 
@@ -101,3 +110,8 @@ They shouldn't be included you want to keep the same coordinate system as your r
 ```grep "[insert IUPAC ambiguity code of choice here]" [your FINAL fasta reference]```
 
 [1]:http://biopython.org/wiki/Biopython
+[2]:http://www.htslib.org
+[3]:http://www.broadinstitute.org/gatk/
+[4]:http://broadinstitute.github.io/picard/
+[5]:http://bio-bwa.sourceforge.net
+[6]:http://bedtools.readthedocs.io/en/latest/
