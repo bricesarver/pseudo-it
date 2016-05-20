@@ -24,7 +24,7 @@ usage: pseudo-it.py [-h] [--PE1 PE1] [--PE2 PE2] [--SE SE] [--proc PROC]
                     [--nt NT]
                     iterations reference prefix
 
-Iterative pseudoreference generation with with BWA and the GATK
+Iterative pseudoreference generation with BWA and the GATK
 
 positional arguments:
   iterations            number of iterations. one iteration will not inject
