@@ -13,7 +13,7 @@ import subprocess
 import fnmatch
 from Bio import SeqIO
 
-parser = argparse.ArgumentParser(description="Iterative pseudoreference generation with with BWA and the GATK", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser = argparse.ArgumentParser(description="Iterative pseudoreference generation with BWA and the GATK", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('iterations', help='number of iterations. one iteration will not inject IUPAC ambiguities', type=int)
 parser.add_argument('reference', help='path to the reference/contigs/scaffolds used for the first iteration')
 parser.add_argument('prefix', help="prefix to use on output files; this is also added to the SM field with AddOrReplaceReadGroups")
