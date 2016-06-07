@@ -1,4 +1,4 @@
-#pseudo-it.py v1.0.1
+#pseudo-it.py v1.0.2
 #iterative pseudoreference generation using BWA and the GATK
 #Brice A. J. Sarver
 #v0.1.0 completed 3 June 2015
@@ -22,7 +22,7 @@ parser.add_argument('--PE2', '-2', dest='pe2', help="Data: PE2. PE, SE, OR PE+SE
 parser.add_argument('--SE', '-s', dest='se', help="Data: SE. PE, SE, OR PE+SE DATA IS REQUIRED", default=None)
 parser.add_argument('--proc', '-np', dest='proc', type=int, help='number of cores to use for multithreaded applications', default=1)
 parser.add_argument('--bed', '-b', dest='bed', help="a BED file of regions to call genotypes via GATK's -L", default=None)
-parser.add_argument('--haplotype', '-haplo', dest='haplo', help="set to 1 to use HaplotypeCaller instead of UnifiedGenotyper. runtime will increase dramatically. indels are still ignored. HaplotypeCaller cannot be threaded", default=0)
+parser.add_argument('--haplotype', dest='haplo', help="invoke to use HaplotypeCaller instead of UnifiedGenotyper. runtime will increase dramatically. indels are still ignored. HaplotypeCaller cannot be threaded", action='store_true')
 parser.add_argument('--nocall', dest='nocall', help="identify no-call sites and inject these into the final reference. has the effect of changing bases that cannot be called to Ns. WARNING: if disabled, all bases that cannot be called will default to the reference allele in the final iteration. This will not work if you are just performing a single iteration; consider running the commands sequentially (one EMIT_ALL_SITES, identify nocalls and subset VCF, and a FastaAltenateReferenceMaker); this functionality may be introduced in subsequent versions. this DOES NOT happen by default and needs to be invoked", action='store_true')
 parser.add_argument('--iupac', dest='iupac', help='invoke to inject IUPAC ambiguity codes for heterozygotes into the final reference', action='store_true')
 parser.add_argument('--keep-haploid-reference', dest='haploid', help="if using '--iupac', this argument also keeps a haploid reference this reference is not masked", action='store_true')
@@ -137,7 +137,7 @@ def first_iteration(iterations, reference, prefix, proc, bed, haplo, fil, pe1, p
     subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T IndelRealigner -R {} -I {}.iteration1.merged.RG_dedup.bam -targetIntervals iteration1.indel_intervals.list -o {}.iteration1.realigned.bam --filter_bases_not_stored'.format(reference, prefix, prefix), shell=True)
     
     #variant calling
-    if haplo == 1:
+    if haplo:
         print("HaplotypeCaller...")
         subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T HaplotypeCaller -R {} -I {}.iteration1.realigned.bam --genotyping_mode DISCOVERY -stand_emit_conf 10 -stand_call_conf 30 -o {}.iteration1.raw.vcf {}'.ArgumentDefaultsHelpFormatter(reference, prefix, prefix, bedoption), shell=True)
     else:
@@ -220,7 +220,7 @@ def other_iterations(iterations, prefix, proc, totalIterations, bed, haplo, ncal
     subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T IndelRealigner -R {} -I {}.iteration{}.merged.RG_dedup.bam -targetIntervals iteration{}.indel_intervals.list -o {}.iteration{}.realigned.bam --filter_bases_not_stored'.format(reference, prefix, iterations, iterations, prefix, iterations), shell=True)
     
     #variant calling
-    if haplo == 1:
+    if haplo:
         print("HaplotypeCaller...")
         subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T HaplotypeCaller -R {} -I {}.iteration{}.realigned.bam --genotyping_mode DISCOVERY -stand_emit_conf 10 -stand_call_conf 30 -o {}.iteration{}.raw.vcf {}'.format(reference, prefix, iterations, prefix, iterations, bedoption), shell=True)
     else:
