@@ -1,4 +1,4 @@
-#pseudo-it.py v1.0.3
+#pseudo-it.py v1.0.4
 #iterative pseudoreference generation using BWA and the GATK
 #Brice A. J. Sarver
 #v0.1.0 completed 3 June 2015
@@ -26,7 +26,7 @@ parser.add_argument('--haplotype', dest='haplo', help="invoke to use HaplotypeCa
 parser.add_argument('--nocall', dest='nocall', help="identify no-call sites and inject these into the final reference. has the effect of changing bases that cannot be called to Ns. WARNING: if disabled, all bases that cannot be called will default to the reference allele in the final iteration. This will not work if you are just performing a single iteration; consider running the commands sequentially (one EMIT_ALL_SITES, identify nocalls and subset VCF, and a FastaAltenateReferenceMaker); this functionality may be introduced in subsequent versions. this DOES NOT happen by default and needs to be invoked", action='store_true')
 parser.add_argument('--iupac', dest='iupac', help='invoke to inject IUPAC ambiguity codes for heterozygotes into the final reference', action='store_true')
 parser.add_argument('--keep-haploid-reference', dest='haploid', help="if using '--iupac', this argument also keeps a haploid reference this reference is not masked", action='store_true')
-parser.add_argument('--filter', '-f', dest='fil', help='overwrite the default filter used to select variants. you MUST specify --filterName and might want to consider selecting something meaningful if you plan to use the VCFs again. you can also specify multiple filters by passing multiple --filterExpression and --filterName arguments (will need a --filterExpression for each additional filter)', default='"MQ < 30 || DP < 5 || DP > 60" --filterName "mq30-5dp60"')
+parser.add_argument('--filter', '-f', dest='fil', help='overwrite the default filter used to select variants. you MUST specify --filterName and might want to consider selecting something meaningful if you plan to use the VCFs again. you can also specify multiple filters by passing multiple --filterExpression and --filterName arguments (will need a --filterExpression for each additional filter)', default='"MQ < 30.0 || DP < 5 || DP > 60" --filterName "mq30-5dp60"')
 parser.add_argument('--nct', dest='nct', help="number of compute threads for the GATK's UnifiedGenotyper. total CPU usage is nct*nt", default=1)
 parser.add_argument('--nt', dest='nt', help="number of data threads for the GATK's UnifiedGenotyper. total CPU usage is nct*nt", default=1)
 #parser.add_argument('--resume', dest="resumeRun", help="resume a previously failed run [WORK IN PROGRESS]")
