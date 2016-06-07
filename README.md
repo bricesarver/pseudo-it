@@ -47,11 +47,11 @@ optional arguments:
                         (default: 1)
   --bed BED, -b BED     a BED file of regions to call genotypes via GATK's -L
                         (default: None)
-  --haplotype HAPLO, -haplo HAPLO
-                        set to 1 to use HaplotypeCaller instead of
+  --haplotype
+                        invoke to use HaplotypeCaller instead of
                         UnifiedGenotyper. runtime will increase dramatically.
                         indels are still ignored. HaplotypeCaller cannot be
-                        threaded (default: 0)
+                        threaded (default: False)
   --nocall              identify no-call sites and inject these into the final
                         reference. has the effect of changing bases that
                         cannot be called to Ns. WARNING: if disabled, all
