@@ -1,4 +1,4 @@
-#pseudo-it.py v1.0.2
+#pseudo-it.py v1.0.3
 #iterative pseudoreference generation using BWA and the GATK
 #Brice A. J. Sarver
 #v0.1.0 completed 3 June 2015
@@ -139,7 +139,7 @@ def first_iteration(iterations, reference, prefix, proc, bed, haplo, fil, pe1, p
     #variant calling
     if haplo:
         print("HaplotypeCaller...")
-        subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T HaplotypeCaller -R {} -I {}.iteration1.realigned.bam --genotyping_mode DISCOVERY -stand_emit_conf 10 -stand_call_conf 30 -o {}.iteration1.raw.vcf {}'.ArgumentDefaultsHelpFormatter(reference, prefix, prefix, bedoption), shell=True)
+        subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T HaplotypeCaller -R {} -I {}.iteration1.realigned.bam --genotyping_mode DISCOVERY -stand_emit_conf 10 -stand_call_conf 30 -o {}.iteration1.raw.vcf {}'.format(reference, prefix, prefix, bedoption), shell=True)
     else:
         print("UnifiedGenotyper...")
         subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T UnifiedGenotyper -R {} -I {}.iteration1.realigned.bam --genotyping_mode DISCOVERY -stand_emit_conf 10 -stand_call_conf 30 -o {}.iteration1.raw.vcf {} {} {}'.format(reference, prefix, prefix, bedoption, nct, nt), shell=True)
