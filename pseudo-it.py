@@ -257,6 +257,8 @@ def other_iterations(iterations, prefix, proc, totalIterations, bed, haplo, ncal
             print("Emitting all sites...")
             subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T UnifiedGenotyper -R {} -I {}.iteration{}.realigned.bam --genotyping_mode DISCOVERY --output_mode EMIT_ALL_SITES -stand_emit_conf 10 -stand_call_conf 30 -o {}.allcalls.vcf {} {}'.format(reference, prefix, iterations, prefix, nct, nt), shell=True)
             subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T VariantFiltration -R {} -V {}.allcalls.vcf {} --filterName "allcallfilter" -o {}.allcalls.filtered.vcf'.format(reference, prefix, ncf, prefix)) 
+            
+            ##FOR LATER START HERE
             print("filtering of nocalls...")
             #whip up a quick BED from the VCF using awk; this appears fastest even though it's a system call
             subprocess.check_call('''grep "\./\." {}.allcalls.filtered.vcf | awk '{{OFS="\t"; if ($0 !~ /\#/); print $1, $2-1, $2}}' > {}.nocalls.positions.bed'''.format(prefix, prefix), shell=True)
