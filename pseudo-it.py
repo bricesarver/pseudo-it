@@ -258,26 +258,15 @@ def other_iterations(iterations, prefix, proc, totalIterations, bed, haplo, ncal
             subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T UnifiedGenotyper -R {} -I {}.iteration{}.realigned.bam --genotyping_mode DISCOVERY --output_mode EMIT_ALL_SITES -stand_emit_conf 10 -stand_call_conf 30 -o {}.allcalls.vcf {} {}'.format(reference, prefix, iterations, prefix, nct, nt), shell=True)
             subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T VariantFiltration -R {} -V {}.allcalls.vcf {} --filterName "allcallfilter" -o {}.allcalls.filtered.vcf'.format(reference, prefix, ncf, prefix)) 
             
-            ##FOR LATER START HERE
             print("filtering of nocalls...")
             #whip up a quick BED from the VCF using awk; this appears fastest even though it's a system call
             subprocess.check_call('''grep "\./\." {}.allcalls.filtered.vcf | awk '{{OFS="\t"; if ($0 !~ /\#/); print $1, $2-1, $2}}' > {}.nocalls.positions.bed'''.format(prefix, prefix), shell=True)
-
-            subprocess.check_call("split -d -l 100000000 {}.nocalls.positions.bed {}.nocalls.split".format(prefix, prefix), shell=True)
-
-            files = os.listdir('.')
-            matches = fnmatch.filter(files, "{}.nocalls.split*".format(prefix))
-            maskiteration = 0
-            if len(matches) == 1:
-                subprocess.check_call("bedtools maskfasta -fi {}.gatk.iteration{}.consensus.FINAL.fa -fo {}.masked.fa -bed {}.nocalls.split00".format(prefix, iterations, prefix, prefix), shell=True)
-            else:
-                for match in matches:
-                    if maskiteration == 0:
-                        subprocess.check_call("bedtools maskfasta -fi {}.gatk.iteration{}.consensus.FINAL.fa -fo {}.masked.fa -bed {}".format(prefix, iterations, prefix, match), shell=True)
-                        maskiteration = 1
-                    else:
-                        subprocess.check_call("bedtools maskfasta -fi {}.masked.fa -fo tmp.fa -bed {}".format(prefix, match), shell=True)
-                        os.rename("tmp.fa", "{}.masked.fa".format(prefix))
+            subprocess.check_call('''grep "allcallfilter" {}.allcalls.filtered.vcf | awk '{{OFS="\t"; if ($0 !~ /\#/); print $1, $2-1, $2}}' > {}.filtered.positions.bed'''.format(prefix, prefix), shell=True)
+            subprocess.check_call("bedtools merge -i {}.nocalls.positions.bed > nocalls.combined.bed".format(prefix), shell=True)
+            subprocess.check_call("bedtools merge -i {}.filtered.positions.bed > filtered.combined.bed".format(prefix), shell=True)
+            subprocess.check_call("cat nocalls.combined.bed filtered.combined.bed | bedtools sort -i - | bedtools merge -i - > all_positions_to_mask.bed", shell=True)
+            subprocess.check_call("bedtools maskfasta -fi {}.gatk.iteration{}.consensus.FINAL.fa -fo {}.masked.fa -bed all_positions_to_mask.bed".format(prefix, iterations, prefix), shell=True)
+        
         elif iupac:
             subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T FastaAlternateReferenceMaker -R {} -o {}.gatk.iteration{}.consensus.FINAL.fa -V {}.iteration{}.filtered.vcf -IUPAC {}'.format(reference, prefix, iterations, prefix, iterations, prefix), shell=True)
             if haploid:
