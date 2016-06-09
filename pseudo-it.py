@@ -261,7 +261,7 @@ def other_iterations(iterations, prefix, proc, totalIterations, bed, haplo, ncal
             print("Emitting all sites...")
             subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T UnifiedGenotyper -R {} -I {}.iteration{}.realigned.bam --genotyping_mode DISCOVERY --output_mode EMIT_ALL_SITES -stand_emit_conf 10 -stand_call_conf 30 -o {}.allcalls.vcf {} {}'.format(reference, prefix, iterations, prefix, nct, nt), shell=True)
             #I remove logging at the ERROR level because we expect filtering to fail on './.' calls
-            subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T VariantFiltration -R {} -V {}.allcalls.vcf {} --filterName "allcallfilter" -o {}.allcalls.filtered.vcf -l ERROR'.format(reference, prefix, ncf, prefix)) 
+            subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T VariantFiltration -R {} -V {}.allcalls.vcf {} --filterName "allcallfilter" -o {}.allcalls.filtered.vcf -l ERROR'.format(reference, prefix, ncf, prefix), shell=True) 
             
             print("filtering of nocalls...")
             #whip up a quick BED from the VCF using awk and throw it to bedtools. of all tests, this remains fastest
