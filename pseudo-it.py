@@ -4,6 +4,7 @@
 #v0.1.0 completed 3 June 2015
 #v0.8.0 release 18 Jan 2016; bug fixes, minor functionality improvements
 #v1.0.1 release 8 May 2016; major functionality improvements, rewrite with Python 3.5+, bug fixes
+#v1.1.0 release 8 June 2016; additional functionality (e.g., masking low-quality variants) and bug fixes
 
 import sys
 import os
@@ -24,8 +25,9 @@ required.add_argument('--SE', '-s', dest='se', help="Data: SE. PE, SE, OR PE+SE 
 parser.add_argument('--proc', '-np', dest='proc', type=int, help='number of cores to use for multithreaded applications', default=1)
 parser.add_argument('--bed', '-b', dest='bed', help="a BED file of regions to call genotypes via GATK's -L", default=None)
 parser.add_argument('--haplotype', dest='haplo', help="invoke to use HaplotypeCaller instead of UnifiedGenotyper. runtime will increase dramatically. indels are still ignored. HaplotypeCaller cannot be threaded", action='store_true')
-parser.add_argument('--nocall', dest='nocall', help="identify no-call sites and inject these into the final reference. has the effect of changing bases that cannot be called to Ns. WARNING: if disabled, all bases that cannot be called will default to the reference allele in the final iteration. This will not work if you are just performing a single iteration; consider running the commands sequentially (one EMIT_ALL_SITES, identify nocalls and subset VCF, and a FastaAltenateReferenceMaker); this functionality may be introduced in subsequent versions. this DOES NOT happen by default and needs to be invoked", action='store_true')
-parser.add_argument('--nocall-filter', '-ncf', dest='ncf', help='additional filtering to be used for the masking step', default='--filterExpression "MQ < 30.0 || DP < 10 || DP > 60"')
+parser.add_argument('--nocall', dest='nocall', help="identify nocall and low-quality sites and mask these in the final reference. has the effect of changing bases that cannot be called to N, by default. requires more than a single iteration at currently; this functionality may be introduced in subsequent versions", action='store_true')
+parser.add_argument('--nocall-filter', '-ncf', dest='ncf', help='additional filtering threshold for low-quality bases to be used for the masking step', default='--filterExpression "MQ < 30.0 || DP < 10 || DP > 60"')
+parser.add_argument('--soft-masking', dest='soft', help='soft mask (i.e., replace with lowercase) instead of hard mask (i.e., replace with N). requires `--nocall`', action='store_true')
 parser.add_argument('--iupac', dest='iupac', help='invoke to inject IUPAC ambiguity codes for heterozygotes into the final reference', action='store_true')
 parser.add_argument('--keep-haploid-reference', dest='haploid', help="if using '--iupac', this argument also keeps a haploid reference this reference is not masked", action='store_true')
 parser.add_argument('--filter', '-f', dest='fil', help='overwrite the default filter used to select variants. you MUST specify --filterName and might want to consider selecting something meaningful if you plan to use the VCFs again. you can also specify multiple filters by passing multiple --filterExpression and --filterName arguments (will need a --filterExpression for each additional filter)', default='"MQ < 30.0 || DP < 5 || DP > 60" --filterName "mq30-5dp60"')
@@ -47,6 +49,8 @@ elif args.pe1 and not args.pe2:
     sys.exit("You specified PE1 but not its mate (PE2)")
 elif not args.pe1 and args.pe2:
     sys.exit("You specified PE2 but not its mate (PE1)")
+elif args.soft and not args.nocall:
+    sys.exit("You specified soft masking (--soft-masking) without specifying nocall masking (--nocall)")
 
 #print(args)
 
@@ -164,7 +168,7 @@ def first_iteration(iterations, reference, prefix, proc, bed, haplo, fil, pe1, p
         SeqIO.write(finalseqs, outfile, "fasta")
 
  
-def other_iterations(iterations, prefix, proc, totalIterations, bed, haplo, ncall, iupac, fil, pe1, pe2, se, nct, nt, haploid, ncf):
+def other_iterations(iterations, prefix, proc, totalIterations, bed, haplo, ncall, iupac, fil, pe1, pe2, se, nct, nt, haploid, ncf, soft):
     finalseqs = []
     #again, define BED argument
     if bed:
@@ -256,16 +260,18 @@ def other_iterations(iterations, prefix, proc, totalIterations, bed, haplo, ncal
 
             print("Emitting all sites...")
             subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T UnifiedGenotyper -R {} -I {}.iteration{}.realigned.bam --genotyping_mode DISCOVERY --output_mode EMIT_ALL_SITES -stand_emit_conf 10 -stand_call_conf 30 -o {}.allcalls.vcf {} {}'.format(reference, prefix, iterations, prefix, nct, nt), shell=True)
-            subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T VariantFiltration -R {} -V {}.allcalls.vcf {} --filterName "allcallfilter" -o {}.allcalls.filtered.vcf'.format(reference, prefix, ncf, prefix)) 
+            #I remove logging at the ERROR level because we expect filtering to fail on './.' calls
+            subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T VariantFiltration -R {} -V {}.allcalls.vcf {} --filterName "allcallfilter" -o {}.allcalls.filtered.vcf -l ERROR'.format(reference, prefix, ncf, prefix)) 
             
             print("filtering of nocalls...")
-            #whip up a quick BED from the VCF using awk; this appears fastest even though it's a system call
-            subprocess.check_call('''grep "\./\." {}.allcalls.filtered.vcf | awk '{{OFS="\t"; if ($0 !~ /\#/); print $1, $2-1, $2}}' > {}.nocalls.positions.bed'''.format(prefix, prefix), shell=True)
-            subprocess.check_call('''grep "allcallfilter" {}.allcalls.filtered.vcf | awk '{{OFS="\t"; if ($0 !~ /\#/); print $1, $2-1, $2}}' > {}.filtered.positions.bed'''.format(prefix, prefix), shell=True)
-            subprocess.check_call("bedtools merge -i {}.nocalls.positions.bed > nocalls.combined.bed".format(prefix), shell=True)
-            subprocess.check_call("bedtools merge -i {}.filtered.positions.bed > filtered.combined.bed".format(prefix), shell=True)
+            #whip up a quick BED from the VCF using awk and throw it to bedtools. of all tests, this remains fastest
+            subprocess.check_call('''grep "\./\." {}.allcalls.filtered.vcf | awk '{{OFS="\t"; if ($0 !~ /\#/); print $1, $2-1, $2}}' | bedtools merge -i - > nocalls.combined.bed'''.format(prefix, prefix), shell=True)
+            subprocess.check_call('''grep "allcallfilter" {}.allcalls.filtered.vcf | awk '{{OFS="\t"; if ($0 !~ /\#/); print $1, $2-1, $2}}' | bedtools merge -i - > filtered.combined.bed'''.format(prefix, prefix), shell=True)
             subprocess.check_call("cat nocalls.combined.bed filtered.combined.bed | bedtools sort -i - | bedtools merge -i - > all_positions_to_mask.bed", shell=True)
-            subprocess.check_call("bedtools maskfasta -fi {}.gatk.iteration{}.consensus.FINAL.fa -fo {}.masked.fa -bed all_positions_to_mask.bed".format(prefix, iterations, prefix), shell=True)
+            if soft:
+                subprocess.check_call("bedtools maskfasta -fi {}.gatk.iteration{}.consensus.FINAL.fa -fo {}.masked.fa -bed all_positions_to_mask.bed -soft".format(prefix, iterations, prefix), shell=True)
+            else:
+                subprocess.check_call("bedtools maskfasta -fi {}.gatk.iteration{}.consensus.FINAL.fa -fo {}.masked.fa -bed all_positions_to_mask.bed".format(prefix, iterations, prefix), shell=True
         
         elif iupac:
             subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T FastaAlternateReferenceMaker -R {} -o {}.gatk.iteration{}.consensus.FINAL.fa -V {}.iteration{}.filtered.vcf -IUPAC {}'.format(reference, prefix, iterations, prefix, iterations, prefix), shell=True)
@@ -322,5 +328,5 @@ first_iteration(iterations=args.iterations, reference=args.reference, prefix=arg
 #and the other iterations
 if args.iterations > 1:
     for i in range(2, args.iterations + 1, 1):
-       other_iterations(iterations=i, prefix=args.prefix, proc=args.proc, totalIterations=args.iterations, bed=args.bed, haplo=args.haplo, ncall=args.nocall, iupac=args.iupac, fil=args.fil, pe1=args.pe1, pe2=args.pe2, se=args.se, nct=args.nct, nt=args.nt, haploid=args.haploid, ncf=args.ncf)
+       other_iterations(iterations=i, prefix=args.prefix, proc=args.proc, totalIterations=args.iterations, bed=args.bed, haplo=args.haplo, ncall=args.nocall, iupac=args.iupac, fil=args.fil, pe1=args.pe1, pe2=args.pe2, se=args.se, nct=args.nct, nt=args.nt, haploid=args.haploid, ncf=args.ncf, soft=args.soft)
 
