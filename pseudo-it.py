@@ -84,7 +84,7 @@ def make_indices(reference):
     #consider symlinking to 'species.fa' or something if this is an issue (e.g., lots of '.')
     dictprefix = os.path.splitext(reference)[0]
     if not os.path.isfile('{}.dict'.format(dictprefix)):
-        subprocess.check_call('java -jar /usr/local/bin/picard.jar CreateSequenceDictionary R={} O={}.dict'.format(reference, dictprefix), shell=True)
+        subprocess.check_call('picard CreateSequenceDictionary R={} O={}.dict'.format(reference, dictprefix), shell=True)
     if not os.path.isfile('{}.fai'.format(reference)):
         print("faidx...")
         subprocess.check_call('samtools faidx {}'.format(reference), shell=True)
@@ -122,7 +122,7 @@ def first_iteration(iterations, reference, prefix, proc, bed, haplo, fil, pe1, p
     
     if pe1 and pe2 and se:
         print("Merge BAMs...")
-        subprocess.check_call('java -jar /usr/local/bin/picard.jar MergeSamFiles I={}.iteration1.pe.bam I={}.iteration1.se.bam O={}.iteration1.merged.bam USE_THREADING=TRUE VALIDATION_STRINGENCY=LENIENT'.format(prefix, prefix, prefix), shell=True)
+        subprocess.check_call('picard MergeSamFiles I={}.iteration1.pe.bam I={}.iteration1.se.bam O={}.iteration1.merged.bam USE_THREADING=TRUE VALIDATION_STRINGENCY=LENIENT'.format(prefix, prefix, prefix), shell=True)
     elif pe1 and pe2 and not se:
         os.rename('{}.iteration1.pe.bam'.format(prefix), '{}.iteration1.merged.bam'.format(prefix))
     elif se and not pe1 and not pe2:
@@ -130,35 +130,35 @@ def first_iteration(iterations, reference, prefix, proc, bed, haplo, fil, pe1, p
     
     #add readgroups and mark dups
     print("AddOrReplaceReadGroups...")
-    subprocess.check_call('java -jar /usr/local/bin/picard.jar AddOrReplaceReadGroups I={}.iteration1.merged.bam O={}.iteration1.merged.RG.bam SO=coordinate LB=spret_exome PL=illumina PU=misc SM={} VALIDATION_STRINGENCY=LENIENT'.format(prefix, prefix, prefix), shell=True)
+    subprocess.check_call('picard AddOrReplaceReadGroups I={}.iteration1.merged.bam O={}.iteration1.merged.RG.bam SO=coordinate LB=spret_exome PL=illumina PU=misc SM={} VALIDATION_STRINGENCY=LENIENT'.format(prefix, prefix, prefix), shell=True)
     print("Mark duplicates...")
-    subprocess.check_call('java -jar /usr/local/bin/picard.jar MarkDuplicates I={}.iteration1.merged.RG.bam O={}.iteration1.merged.RG_dedup.bam VALIDATION_STRINGENCY=LENIENT M=iteration1.dup_metrics'.format(prefix, prefix), shell=True)
+    subprocess.check_call('picard MarkDuplicates I={}.iteration1.merged.RG.bam O={}.iteration1.merged.RG_dedup.bam VALIDATION_STRINGENCY=LENIENT M=iteration1.dup_metrics'.format(prefix, prefix), shell=True)
     
     #indel realignment
     print("Index BAMs...")
     subprocess.check_call('samtools index {}.iteration1.merged.RG_dedup.bam'.format(prefix), shell=True)
     print("Identify targets to realign...")
-    subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T RealignerTargetCreator -R {} -I {}.iteration1.merged.RG_dedup.bam -o iteration1.indel_intervals.list {} -nt {}'.format(reference, prefix, bedoption, proc), shell=True)
+    subprocess.check_call('java -jar /home/brice_sarver/bin/GenomeAnalysisTK.jar -T RealignerTargetCreator -R {} -I {}.iteration1.merged.RG_dedup.bam -o iteration1.indel_intervals.list {} -nt {}'.format(reference, prefix, bedoption, proc), shell=True)
     print("Realign Indels...")
-    subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T IndelRealigner -R {} -I {}.iteration1.merged.RG_dedup.bam -targetIntervals iteration1.indel_intervals.list -o {}.iteration1.realigned.bam --filter_bases_not_stored'.format(reference, prefix, prefix), shell=True)
+    subprocess.check_call('java -jar /home/brice_sarver/bin/GenomeAnalysisTK.jar -T IndelRealigner -R {} -I {}.iteration1.merged.RG_dedup.bam -targetIntervals iteration1.indel_intervals.list -o {}.iteration1.realigned.bam --filter_bases_not_stored'.format(reference, prefix, prefix), shell=True)
     
     #variant calling
     if haplo:
         print("HaplotypeCaller...")
-        subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T HaplotypeCaller -R {} -I {}.iteration1.realigned.bam --genotyping_mode DISCOVERY -stand_emit_conf 10 -stand_call_conf 30 -o {}.iteration1.raw.vcf {}'.format(reference, prefix, prefix, bedoption), shell=True)
+        subprocess.check_call('java -jar /home/brice_sarver/bin/GenomeAnalysisTK.jar -T HaplotypeCaller -R {} -I {}.iteration1.realigned.bam --genotyping_mode DISCOVERY -stand_emit_conf 10 -stand_call_conf 30 -o {}.iteration1.raw.vcf {}'.format(reference, prefix, prefix, bedoption), shell=True)
     else:
         print("UnifiedGenotyper...")
-        subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T UnifiedGenotyper -R {} -I {}.iteration1.realigned.bam --genotyping_mode DISCOVERY -stand_emit_conf 10 -stand_call_conf 30 -o {}.iteration1.raw.vcf {} {} {}'.format(reference, prefix, prefix, bedoption, nct, nt), shell=True)
+        subprocess.check_call('java -jar /home/brice_sarver/bin/GenomeAnalysisTK.jar -T UnifiedGenotyper -R {} -I {}.iteration1.realigned.bam --genotyping_mode DISCOVERY -stand_emit_conf 10 -stand_call_conf 30 -o {}.iteration1.raw.vcf {} {} {}'.format(reference, prefix, prefix, bedoption, nct, nt), shell=True)
     
     #selecting SNPs and filtering
     print("Select SNPs from VCF...")
-    subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T SelectVariants -R {} -V {}.iteration1.raw.vcf -o {}.iteration1.snps.vcf --selectTypeToInclude SNP'.format(reference, prefix, prefix), shell=True)
+    subprocess.check_call('java -jar /home/brice_sarver/bin/GenomeAnalysisTK.jar -T SelectVariants -R {} -V {}.iteration1.raw.vcf -o {}.iteration1.snps.vcf --selectTypeToInclude SNP'.format(reference, prefix, prefix), shell=True)
     print("Filter variants...")
-    subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T VariantFiltration -R {} -V {}.iteration1.snps.vcf --filterExpression {} -o {}.iteration1.filtered.vcf'.format(reference, prefix, fil, prefix), shell=True)
+    subprocess.check_call('java -jar /home/brice_sarver/bin/GenomeAnalysisTK.jar -T VariantFiltration -R {} -V {}.iteration1.snps.vcf --filterExpression {} -o {}.iteration1.filtered.vcf'.format(reference, prefix, fil, prefix), shell=True)
     
     #consensus calling and filtering
     print("Generate consensus from reference and variants...")
-    subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T FastaAlternateReferenceMaker -R {} -o {}.gatk.iteration1.consensus.fa -V {}.iteration1.filtered.vcf'.format(reference, prefix, prefix), shell=True)
+    subprocess.check_call('java -jar /home/brice_sarver/bin/GenomeAnalysisTK.jar -T FastaAlternateReferenceMaker -R {} -o {}.gatk.iteration1.consensus.fa -V {}.iteration1.filtered.vcf'.format(reference, prefix, prefix), shell=True)
 
     with open("{}.gatk.iteration1.consensus.fa".format(prefix), "rU") as consensus:
         finalseqs = list(SeqIO.parse(consensus, "fasta"))
@@ -201,7 +201,7 @@ def other_iterations(iterations, prefix, proc, totalIterations, bed, haplo, ncal
     
     if pe1 and pe2 and se:
         print("Merge BAMs...")
-        subprocess.check_call('java -jar /usr/local/bin/picard.jar MergeSamFiles I={}.iteration{}.pe.bam I={}.iteration{}.se.bam O={}.iteration{}.merged.bam USE_THREADING=TRUE VALIDATION_STRINGENCY=LENIENT'.format(prefix, iterations, prefix, iterations, prefix, iterations), shell=True)
+        subprocess.check_call('picard MergeSamFiles I={}.iteration{}.pe.bam I={}.iteration{}.se.bam O={}.iteration{}.merged.bam USE_THREADING=TRUE VALIDATION_STRINGENCY=LENIENT'.format(prefix, iterations, prefix, iterations, prefix, iterations), shell=True)
     elif pe1 and pe2 and not se:
         os.rename('{}.iteration1.pe.bam'.format(prefix), '{}.iteration{}.merged.bam'.format(prefix, iterations))
     elif se and not pe1 and not pe2:
@@ -213,43 +213,43 @@ def other_iterations(iterations, prefix, proc, totalIterations, bed, haplo, ncal
     
     #add readgroups and mark dups
     print("AddOrReplaceReadGroups...")
-    subprocess.check_call('java -jar /usr/local/bin/picard.jar AddOrReplaceReadGroups I={}.iteration{}.merged.bam O={}.iteration{}.merged.RG.bam SO=coordinate LB=spret_exome PL=illumina PU=misc SM={} VALIDATION_STRINGENCY=LENIENT'.format(prefix, iterations, prefix, iterations, prefix), shell=True)
+    subprocess.check_call('picard AddOrReplaceReadGroups I={}.iteration{}.merged.bam O={}.iteration{}.merged.RG.bam SO=coordinate LB=spret_exome PL=illumina PU=misc SM={} VALIDATION_STRINGENCY=LENIENT'.format(prefix, iterations, prefix, iterations, prefix), shell=True)
     print("Mark duplicates...")
-    subprocess.check_call('java -jar /usr/local/bin/picard.jar MarkDuplicates I={}.iteration{}.merged.RG.bam O={}.iteration{}.merged.RG_dedup.bam VALIDATION_STRINGENCY=LENIENT M=iteration1.dup_metrics'.format(prefix, iterations, prefix, iterations), shell=True)
+    subprocess.check_call('picard MarkDuplicates I={}.iteration{}.merged.RG.bam O={}.iteration{}.merged.RG_dedup.bam VALIDATION_STRINGENCY=LENIENT M=iteration1.dup_metrics'.format(prefix, iterations, prefix, iterations), shell=True)
     
     #indel realignment
     print("Index BAMs...")
     subprocess.check_call('samtools index {}.iteration{}.merged.RG_dedup.bam'.format(prefix, iterations), shell=True)
     print("Identify targets to realign...")
-    subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T RealignerTargetCreator -R {} -I {}.iteration{}.merged.RG_dedup.bam -o iteration{}.indel_intervals.list {} -nt {}'.format(reference, prefix, iterations, iterations, bedoption, proc), shell=True)
+    subprocess.check_call('java -jar /home/brice_sarver/bin/GenomeAnalysisTK.jar -T RealignerTargetCreator -R {} -I {}.iteration{}.merged.RG_dedup.bam -o iteration{}.indel_intervals.list {} -nt {}'.format(reference, prefix, iterations, iterations, bedoption, proc), shell=True)
     print("Realign Indels...")
-    subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T IndelRealigner -R {} -I {}.iteration{}.merged.RG_dedup.bam -targetIntervals iteration{}.indel_intervals.list -o {}.iteration{}.realigned.bam --filter_bases_not_stored'.format(reference, prefix, iterations, iterations, prefix, iterations), shell=True)
+    subprocess.check_call('java -jar /home/brice_sarver/bin/GenomeAnalysisTK.jar -T IndelRealigner -R {} -I {}.iteration{}.merged.RG_dedup.bam -targetIntervals iteration{}.indel_intervals.list -o {}.iteration{}.realigned.bam --filter_bases_not_stored'.format(reference, prefix, iterations, iterations, prefix, iterations), shell=True)
     
     #variant calling
     if haplo:
         print("HaplotypeCaller...")
-        subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T HaplotypeCaller -R {} -I {}.iteration{}.realigned.bam --genotyping_mode DISCOVERY -stand_emit_conf 10 -stand_call_conf 30 -o {}.iteration{}.raw.vcf {}'.format(reference, prefix, iterations, prefix, iterations, bedoption), shell=True)
+        subprocess.check_call('java -jar /home/brice_sarver/bin/GenomeAnalysisTK.jar -T HaplotypeCaller -R {} -I {}.iteration{}.realigned.bam --genotyping_mode DISCOVERY -stand_emit_conf 10 -stand_call_conf 30 -o {}.iteration{}.raw.vcf {}'.format(reference, prefix, iterations, prefix, iterations, bedoption), shell=True)
     else:
         print("UnifiedGenotyper...")
-        subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T UnifiedGenotyper -R {} -I {}.iteration{}.realigned.bam --genotyping_mode DISCOVERY -stand_emit_conf 10 -stand_call_conf 30 -o {}.iteration{}.raw.vcf {} {} {}'.format(reference, prefix, iterations, prefix, iterations, bedoption, nct, nt), shell=True)
+        subprocess.check_call('java -jar /home/brice_sarver/bin/GenomeAnalysisTK.jar -T UnifiedGenotyper -R {} -I {}.iteration{}.realigned.bam --genotyping_mode DISCOVERY -stand_emit_conf 10 -stand_call_conf 30 -o {}.iteration{}.raw.vcf {} {} {}'.format(reference, prefix, iterations, prefix, iterations, bedoption, nct, nt), shell=True)
     
     #selecting SNPs and filtering
     print("Select SNPs from VCF...")
-    subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T SelectVariants -R {} -V {}.iteration{}.raw.vcf -o {}.iteration{}.snps.vcf --selectTypeToInclude SNP'.format(reference, prefix, iterations, prefix, iterations), shell=True)
+    subprocess.check_call('java -jar /home/brice_sarver/bin/GenomeAnalysisTK.jar -T SelectVariants -R {} -V {}.iteration{}.raw.vcf -o {}.iteration{}.snps.vcf --selectTypeToInclude SNP'.format(reference, prefix, iterations, prefix, iterations), shell=True)
     print("Filter variants...")
-    subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T VariantFiltration -R {} -V {}.iteration{}.snps.vcf --filterExpression {} -o {}.iteration{}.filtered.vcf'.format(reference, prefix, iterations, fil, prefix, iterations), shell=True)
+    subprocess.check_call('java -jar /home/brice_sarver/bin/GenomeAnalysisTK.jar -T VariantFiltration -R {} -V {}.iteration{}.snps.vcf --filterExpression {} -o {}.iteration{}.filtered.vcf'.format(reference, prefix, iterations, fil, prefix, iterations), shell=True)
     
     #consensus calling and filtering; write out IUPAC ambiguities on last iteration if indicated
     if totalIterations == iterations:
         if ncall:
             if iupac:
                 print("Generate consensus from reference and variants...")
-                subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T FastaAlternateReferenceMaker -R {} -o {}.gatk.iteration{}.consensus.FINAL.fa -V {}.iteration{}.filtered.vcf -IUPAC {}'.format(reference, prefix, iterations, prefix, iterations, prefix), shell=True)
+                subprocess.check_call('java -jar /home/brice_sarver/bin/GenomeAnalysisTK.jar -T FastaAlternateReferenceMaker -R {} -o {}.gatk.iteration{}.consensus.FINAL.fa -V {}.iteration{}.filtered.vcf -IUPAC {}'.format(reference, prefix, iterations, prefix, iterations, prefix), shell=True)
                 if haploid:
-                    subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T FastaAlternateReferenceMaker -R {} -o {}.gatk.iteration{}.consensus.FINAL.haploid.fa -V {}.iteration{}.filtered.vcf'.format(reference, prefix, iterations, prefix, iterations), shell=True)
+                    subprocess.check_call('java -jar /home/brice_sarver/bin/GenomeAnalysisTK.jar -T FastaAlternateReferenceMaker -R {} -o {}.gatk.iteration{}.consensus.FINAL.haploid.fa -V {}.iteration{}.filtered.vcf'.format(reference, prefix, iterations, prefix, iterations), shell=True)
             else:
                 print("Generate consensus from reference and variants...")
-                subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T FastaAlternateReferenceMaker -R {} -o {}.gatk.iteration{}.consensus.FINAL.fa -V {}.iteration{}.filtered.vcf'.format(reference, prefix, iterations, prefix, iterations), shell=True)
+                subprocess.check_call('java -jar /home/brice_sarver/bin/GenomeAnalysisTK.jar -T FastaAlternateReferenceMaker -R {} -o {}.gatk.iteration{}.consensus.FINAL.fa -V {}.iteration{}.filtered.vcf'.format(reference, prefix, iterations, prefix, iterations), shell=True)
 
             with open("{}.gatk.iteration{}.consensus.FINAL.fa".format(prefix, iterations), "rU") as consensus:
                 finalseqs = list(SeqIO.parse(consensus, "fasta"))
@@ -259,9 +259,9 @@ def other_iterations(iterations, prefix, proc, totalIterations, bed, haplo, ncal
                 SeqIO.write(finalseqs, outfile, "fasta")
 
             print("Emitting all sites...")
-            subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T UnifiedGenotyper -R {} -I {}.iteration{}.realigned.bam --genotyping_mode DISCOVERY --output_mode EMIT_ALL_SITES -stand_emit_conf 10 -stand_call_conf 30 -o {}.allcalls.vcf {} {}'.format(reference, prefix, iterations, prefix, nct, nt), shell=True)
+            subprocess.check_call('java -jar /home/brice_sarver/bin/GenomeAnalysisTK.jar -T UnifiedGenotyper -R {} -I {}.iteration{}.realigned.bam --genotyping_mode DISCOVERY --output_mode EMIT_ALL_SITES -stand_emit_conf 10 -stand_call_conf 30 -o {}.allcalls.vcf {} {}'.format(reference, prefix, iterations, prefix, nct, nt), shell=True)
             #I remove logging at the ERROR level because we expect filtering to fail on './.' calls
-            subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T VariantFiltration -R {} -V {}.allcalls.vcf {} --filterName "allcallfilter" -o {}.allcalls.filtered.vcf -l ERROR'.format(reference, prefix, ncf, prefix)) 
+            subprocess.check_call('java -jar /home/brice_sarver/bin/GenomeAnalysisTK.jar -T VariantFiltration -R {} -V {}.allcalls.vcf {} --filterName "allcallfilter" -o {}.allcalls.filtered.vcf -l ERROR'.format(reference, prefix, ncf, prefix)) 
             
             print("filtering of nocalls...")
             #whip up a quick BED from the VCF using awk and throw it to bedtools. of all tests, this remains fastest
@@ -274,10 +274,10 @@ def other_iterations(iterations, prefix, proc, totalIterations, bed, haplo, ncal
                 subprocess.check_call("bedtools maskfasta -fi {}.gatk.iteration{}.consensus.FINAL.fa -fo {}.masked.fa -bed all_positions_to_mask.bed".format(prefix, iterations, prefix), shell=True)
         
         elif iupac:
-            subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T FastaAlternateReferenceMaker -R {} -o {}.gatk.iteration{}.consensus.FINAL.fa -V {}.iteration{}.filtered.vcf -IUPAC {}'.format(reference, prefix, iterations, prefix, iterations, prefix), shell=True)
+            subprocess.check_call('java -jar /home/brice_sarver/bin/GenomeAnalysisTK.jar -T FastaAlternateReferenceMaker -R {} -o {}.gatk.iteration{}.consensus.FINAL.fa -V {}.iteration{}.filtered.vcf -IUPAC {}'.format(reference, prefix, iterations, prefix, iterations, prefix), shell=True)
             if haploid:
                 print("Generate consensus from reference and variants...")
-                subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T FastaAlternateReferenceMaker -R {} -o {}.gatk.iteration{}.consensus.FINAL.haploid.fa -V {}.iteration{}.filtered.vcf'.format(reference, prefix, iterations, prefix, iterations), shell=True)
+                subprocess.check_call('java -jar /home/brice_sarver/bin/GenomeAnalysisTK.jar -T FastaAlternateReferenceMaker -R {} -o {}.gatk.iteration{}.consensus.FINAL.haploid.fa -V {}.iteration{}.filtered.vcf'.format(reference, prefix, iterations, prefix, iterations), shell=True)
 
             with open("{}.gatk.iteration{}.consensus.FINAL.fa".format(prefix, iterations), "rU") as consensus:
                 finalseqs = list(SeqIO.parse(consensus, "fasta"))
@@ -286,7 +286,7 @@ def other_iterations(iterations, prefix, proc, totalIterations, bed, haplo, ncal
             with open("{}.gatk.iteration{}.consensus.FINAL.fa".format(prefix, iterations), "w") as outfile:
                 SeqIO.write(finalseqs, outfile, "fasta")
         else:
-            subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T FastaAlternateReferenceMaker -R {} -o {}.gatk.iteration{}.consensus.FINAL.fa -V {}.iteration{}.filtered.vcf'.format(reference, prefix, iterations, prefix, iterations), shell=True)
+            subprocess.check_call('java -jar /home/brice_sarver/bin/GenomeAnalysisTK.jar -T FastaAlternateReferenceMaker -R {} -o {}.gatk.iteration{}.consensus.FINAL.fa -V {}.iteration{}.filtered.vcf'.format(reference, prefix, iterations, prefix, iterations), shell=True)
 
             with open("{}.gatk.iteration{}.consensus.FINAL.fa".format(prefix, iterations), "rU") as consensus:
                 finalseqs = list(SeqIO.parse(consensus, "fasta"))
@@ -297,7 +297,7 @@ def other_iterations(iterations, prefix, proc, totalIterations, bed, haplo, ncal
 
     else:
         print("Generate consensus from reference and variants...")
-        subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T FastaAlternateReferenceMaker -R {} -o {}.gatk.iteration{}.consensus.fa -V {}.iteration{}.filtered.vcf'.format(reference, prefix, iterations, prefix, iterations), shell=True)
+        subprocess.check_call('java -jar /home/brice_sarver/bin/GenomeAnalysisTK.jar -T FastaAlternateReferenceMaker -R {} -o {}.gatk.iteration{}.consensus.fa -V {}.iteration{}.filtered.vcf'.format(reference, prefix, iterations, prefix, iterations), shell=True)
 
         with open("{}.gatk.iteration{}.consensus.fa".format(prefix, iterations), "rU") as consensus:
             finalseqs = list(SeqIO.parse(consensus, "fasta"))
