@@ -106,9 +106,9 @@ I'm looking into this, but it will require a multiprocessing approach and possib
 
 They shouldn't be included you want to keep the same coordinate system as your reference! Easy enough to do afterwards using standard variant-calling aproaches.
 
-**I can't remember if I allowed multiallelic calls in my final reference!**
+**I can't remember if I allowed ambiguities in my final reference!**
 
-
+Besides looking at the name of the file, you can
 ```grep "[insert IUPAC ambiguity code of choice here]" [your FINAL fasta reference]```
 
 [1]:http://biopython.org/wiki/Biopython
