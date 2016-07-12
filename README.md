@@ -3,7 +3,7 @@ An approach that iteratively generates pseudoreferences, incorporating sample-sp
 
 This is being converted into a true (and easier to follow/extend) Python package and will eventually be replaced.
 
-***For stream-based masking, I please clone the ```devel``` branch. I am currently tracking down I/O issues and/or bugs in applications related to the nocall masking, possibly with bedtools sort. Be aware that using --nocall is memory intensive for full genomes after reverting back to a non-streaming approach. I am converting masking to its own module for ease in logging and exception handling, whcih will be available shortly and pushed to ```master```.***
+***For stream-based masking, I please clone the ```devel``` branch. I am currently tracking down I/O issues and/or bugs in applications related to the nocall masking, possibly with bedtools sort. Be aware that using --nocall is memory intensive for full genomes after reverting back to a non-streaming approach. I am converting masking to its own module for ease in logging and exception handling, whcih will be available shortly and pushed to ```master```. UPDATE: this is now available through [mask.py]; incorporating this into the main codebase***
 
 Requires: 
 
