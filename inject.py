@@ -27,9 +27,9 @@ def main():
 
 
 if __name__ == "__main__":
-	reference = sys.argv[1]
+    reference = sys.argv[1]
     prefix = sys.argv[2]
     iterations = sys.argv[3]
     iupac = sys.argv[4]
     print(reference, prefix, iterations, iupac)
-	main()
+    main()
