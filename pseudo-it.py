@@ -265,15 +265,9 @@ def other_iterations(iterations, prefix, proc, totalIterations, bed, haplo, ncal
             
             print("filtering of nocalls...")
             #whip up a quick BED from the VCF using awk and throw it to bedtools. of all tests, this remains fastest
-            subprocess.check_call('''grep "\./\." {}.allcalls.filtered.vcf | awk '{{OFS="\t"; if ($0 !~ /\#/); print $1, $2-1, $2}}' > nocalls.bed'''.format(prefix), shell=True)
-            subprocess.check_call("bedtools sort -i nocalls.bed > nocalls.sorted.bed", shell=True)
-            subprocess.check_call("bedtools merge -i nocalls.sorted.bed > nocalls.combined.bed", shell=True)
-            subprocess.check_call('''grep "allcallfilter" {}.allcalls.filtered.vcf | awk '{{OFS="\t"; if ($0 !~ /\#/); print $1, $2-1, $2}}' > filtered.bed'''.format(prefix), shell=True)
-            subprocess.check_call("bedtools sort -i filtered.bed > filtered.sorted.bed", shell=True)
-            subprocess.check_call("bedtools merge -i filtered.sorted.bed > filltered.combined.bed", shell=True)
-            subprocess.check_call("cat nocalls.combined.bed filtered.combined.bed > both.bed", shell=True)
-            subprocess.check_call("bedtools sort -i both.bed > both.sorted.bed", shell=True)
-            subprocess.check_call("bedtools merge -i both.sorted.bed > all_positions_to_mask.bed", shell=True)
+            subprocess.check_call('''grep "\./\." {}.allcalls.filtered.vcf | awk '{{OFS="\t"; if ($0 !~ /\#/); print $1, $2-1, $2}}' | bedtools merge -i - > nocalls.combined.bed'''.format(prefix, prefix), shell=True)
+            subprocess.check_call('''grep "allcallfilter" {}.allcalls.filtered.vcf | awk '{{OFS="\t"; if ($0 !~ /\#/); print $1, $2-1, $2}}' | bedtools merge -i - > filtered.combined.bed'''.format(prefix, prefix), shell=True)
+            subprocess.check_call("cat nocalls.combined.bed filtered.combined.bed | bedtools sort -i - | bedtools merge -i - > all_positions_to_mask.bed", shell=True)
             if soft:
                 subprocess.check_call("bedtools maskfasta -fi {}.gatk.iteration{}.consensus.FINAL.fa -fo {}.masked.fa -bed all_positions_to_mask.bed -soft".format(prefix, iterations, prefix), shell=True)
             else:
