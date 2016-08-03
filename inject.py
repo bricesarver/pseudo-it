@@ -14,9 +14,9 @@ def main():
             ids.append(record.id)
 
     if iupac == 1:
-        subprocess.check_call('java -jar /home/brice_sarver/bin/GenomeAnalysisTK.jar -T FastaAlternateReferenceMaker -R {} -o {}.gatk.iteration{}.pseudo.fa -V {}.iteration{}.filtered.vcf -IUPAC {}'.format(reference, prefix, iterations, prefix, iterations, prefix), shell=True)
+        subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T FastaAlternateReferenceMaker -R {} -o {}.gatk.iteration{}.pseudo.fa -V {}.iteration{}.filtered.vcf -IUPAC {}'.format(reference, prefix, iterations, prefix, iterations, prefix), shell=True)
     else:
-        subprocess.check_call('java -jar /home/brice_sarver/bin/GenomeAnalysisTK.jar -T FastaAlternateReferenceMaker -R {} -o {}.gatk.iteration{}.pseudo.fa -V {}.iteration{}.filtered.vcf'.format(reference, prefix, iterations, prefix, iterations), shell=True)
+        subprocess.check_call('java -jar /usr/local/bin/GenomeAnalysisTK.jar -T FastaAlternateReferenceMaker -R {} -o {}.gatk.iteration{}.pseudo.fa -V {}.iteration{}.filtered.vcf'.format(reference, prefix, iterations, prefix, iterations), shell=True)
 
     with open("{}.gatk.iteration{}.pseudo.fa".format(prefix, iterations), "rU") as consensus:
         finalseqs = list(SeqIO.parse(consensus, "fasta"))
@@ -30,6 +30,6 @@ if __name__ == "__main__":
     reference = sys.argv[1]
     prefix = sys.argv[2]
     iterations = sys.argv[3]
-    iupac = sys.argv[4]
+    iupac = int(sys.argv[4])
     print(reference, prefix, iterations, iupac)
     main()
