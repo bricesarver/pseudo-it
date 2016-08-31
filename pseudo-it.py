@@ -265,9 +265,7 @@ def other_iterations(iterations, prefix, proc, totalIterations, bed, haplo, ncal
             
             print("filtering of nocalls...")
             #whip up a quick BED from the VCF using awk and throw it to bedtools. of all tests, this remains fastest
-            subprocess.check_call('''grep "\./\." {}.allcalls.filtered.vcf | awk '{{OFS="\t"; if ($0 !~ /\#/); print $1, $2-1, $2}}' | bedtools merge -i - > nocalls.combined.bed'''.format(prefix, prefix), shell=True)
-            subprocess.check_call('''grep "allcallfilter" {}.allcalls.filtered.vcf | awk '{{OFS="\t"; if ($0 !~ /\#/); print $1, $2-1, $2}}' | bedtools merge -i - > filtered.combined.bed'''.format(prefix, prefix), shell=True)
-            subprocess.check_call("cat nocalls.combined.bed filtered.combined.bed | bedtools sort -i - | bedtools merge -i - > all_positions_to_mask.bed", shell=True)
+            subprocess.check_call('''awk '(/\.\/\./ || /allcallfilter/) && !/^\#/ {{OFS="\t"; print $1, $2-1, $2}}' {}.allcalls.filtered.vcf | bedtools merge -i - > all_positions_to_mask.bed'''.format(prefix), shell=True)
             if soft:
                 subprocess.check_call("bedtools maskfasta -fi {}.gatk.iteration{}.consensus.FINAL.fa -fo {}.masked.fa -bed all_positions_to_mask.bed -soft".format(prefix, iterations, prefix), shell=True)
             else:
