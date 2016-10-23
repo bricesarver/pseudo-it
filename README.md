@@ -101,7 +101,7 @@ This depends on the sequence divergence of your sample relative to your referenc
 
 **No-call masking takes a long time! Can this be sped up?**
 
-I'm looking into this, but it will require a multiprocessing approach and possibly the use of more sophisticated data structures. UPDATE: I have been able to speed this up substntially by using bedtools.
+I'm looking into this, but it will require a multiprocessing approach and possibly the use of more sophisticated data structures. UPDATE: I have been able to speed this up substantially by using ```bedtools```.
 
 
 **You don't account for indels? Why not?**
