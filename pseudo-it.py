@@ -203,9 +203,9 @@ def other_iterations(iterations, prefix, proc, totalIterations, bed, haplo, ncal
         print("Merge BAMs...")
         subprocess.check_call('picard MergeSamFiles I={}.iteration{}.pe.bam I={}.iteration{}.se.bam O={}.iteration{}.merged.bam USE_THREADING=TRUE VALIDATION_STRINGENCY=LENIENT'.format(prefix, iterations, prefix, iterations, prefix, iterations), shell=True)
     elif pe1 and pe2 and not se:
-        os.rename('{}.iteration1.pe.bam'.format(prefix), '{}.iteration{}.merged.bam'.format(prefix, iterations))
+        os.rename('{}.iteration{}.pe.bam'.format(prefix, iterations), '{}.iteration{}.merged.bam'.format(prefix, iterations))
     elif se and not pe1 and not pe2:
-        os.rename('{}.iteration1.se.bam'.format(prefix), '{}.iteration{}.merged.bam'.format(prefix, iterations))
+        os.rename('{}.iteration{}.se.bam'.format(prefix, iterations), '{}.iteration{}.merged.bam'.format(prefix, iterations))
 
     #sort bam
     print("Sorting BAMs...")
