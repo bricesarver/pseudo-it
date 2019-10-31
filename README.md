@@ -5,11 +5,11 @@ This is being converted into a true (and easier to follow/extend) Python package
 
 ***UPDATE: stream-based masking is now available through ```mask.py``` for any runs that might have returned an error after filtering the [allcalls] VCF. Streaming is re-incorporated into the ```master``` branch. At this time, I am attributing any former issues to a token I/O hiccup.***
 
-Requires: 
+Requires:
 
 1. [Biopython][1]
 2. [Samtools][2]
-3. [The Genome Analysis Toolkit][3]
+3. [The Genome Analysis Toolkit][3] v3.8 (not 4+)
 4. [Picard][4]
 5. [BWA][5]
 6. [bedtools][6]
