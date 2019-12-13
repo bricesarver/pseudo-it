@@ -4,7 +4,7 @@ An approach that iteratively generates pseudoreferences, incorporating sample-sp
 This is being converted into a true (and easier to follow/extend) Python package and will eventually be replaced.
 
 ## pseudo-it 2.0
-This script-based workflow is being replaced by a complete Python 3.7+ module and associated Conda environment, with full Dockerization as a follow-up. pseudo-it experiments will be managed through classes, facilitating easy modification (and OOP benefits) for a variety of projects. A pytest functional testing suite will help diagnose many of the common problems that crop up regarding system configuration and installs. Importantly, commercial users will **not** be required to have a GATK3 3+ license upon migration to GATK 4.
+This script-based workflow is being replaced by a complete Python 3.7+ module and associated Conda environment, with full Dockerization as a follow-up. pseudo-it experiments will be managed through classes, facilitating easy modification (and OOP benefits) for a variety of projects. A pytest functional testing suite will help diagnose many of the common problems that crop up regarding system configuration and installs. Importantly, commercial users will **not** be required to have a GATK 3+ license upon migration to GATK 4.
 
 Future: basic GUI, AWS Lambda integration, results API?
 
